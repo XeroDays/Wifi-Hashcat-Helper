@@ -6,6 +6,11 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $hashesDir = Join-Path $scriptDir "hashes"
 $dictsDir = Join-Path $scriptDir "dicts"
 $rulesDir = Join-Path $scriptDir "rules"
+$outputDir = Join-Path $scriptDir "output"
+
+# Hashcat executable path - Set this to your hashcat.exe full path, or leave empty to use PATH
+# Example: $hashcatPath = "C:\hashcat\hashcat.exe"
+$hashcatPath = "C:\hashcat\hashcat.exe"
 
 # Function to display menu and get user selection
 function Show-Menu {
@@ -42,9 +47,9 @@ function Show-Menu {
             return $null
         }
         
-        $numSelection = [int]::TryParse($selection, [ref]$null)
-        if ($numSelection -and $numSelection -ge 1 -and $numSelection -le $Items.Count) {
-            return $Items[$numSelection - 1]
+        $parsedValue = 0
+        if ([int]::TryParse($selection, [ref]$parsedValue) -and $parsedValue -ge 1 -and $parsedValue -le $Items.Count) {
+            return $Items[$parsedValue - 1]
         }
         
         Write-Host "Invalid selection. Please try again." -ForegroundColor Red
@@ -113,6 +118,23 @@ function Select-RuleFile {
     return $selected
 }
 
+# Determine hashcat executable path
+if ($hashcatPath -eq "" -or -not (Test-Path $hashcatPath)) {
+    # Try to find hashcat in PATH
+    $hashcatInPath = Get-Command hashcat -ErrorAction SilentlyContinue
+    if ($hashcatInPath) {
+        $hashcatExe = "hashcat"
+    } else {
+        Write-Host "Error: Hashcat executable not found!" -ForegroundColor Red
+        Write-Host "Please set the `$hashcatPath variable at the top of this script" -ForegroundColor Yellow
+        Write-Host "with the full path to your hashcat.exe file." -ForegroundColor Yellow
+        Write-Host "Example: `$hashcatPath = `"C:\hashcat\hashcat.exe`"" -ForegroundColor Yellow
+        exit 1
+    }
+} else {
+    $hashcatExe = $hashcatPath
+}
+
 # Main execution
 Clear-Host
 Write-Host "========================================" -ForegroundColor Cyan
@@ -136,17 +158,43 @@ if (-not $dictFile) {
 # Select rule file (optional)
 $ruleFile = Select-RuleFile
 
+# Get workload value
+Write-Host "`n=== Workload Configuration ===" -ForegroundColor Green
+Write-Host "Workload profile (1=Low, 2=Default, 3=High, 4=Nightmare)" -ForegroundColor Yellow
+while ($true) {
+    $workload = Read-Host "Enter workload value (1-4, default: 2)"
+    if ($workload -eq "") {
+        $workload = "2"
+        break
+    }
+    if ($workload -match "^(1|2|3|4)$") {
+        break
+    }
+    Write-Host "Invalid workload value. Please enter 1, 2, 3, or 4." -ForegroundColor Red
+}
+
 # Build hashcat command
 $hashPath = $hashFile.FullName
 $dictPath = $dictFile.FullName
+
+# Create output directory if it doesn't exist
+if (-not (Test-Path $outputDir)) {
+    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+}
+
+# Generate output file name based on hash file name
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$outputFileName = "$($hashFile.BaseName)_cracked_$timestamp.txt"
+$outputPath = Join-Path $outputDir $outputFileName
 
 $hashcatArgs = @(
     "-m", "22000",           # WPA2/WPA3 mode
     "-a", "0",               # Dictionary attack mode
     "`"$hashPath`"",
     "`"$dictPath`"",
-    "--status",              # Enable status output
-    "--status-timer", "5"    # Status update every 5 seconds
+    "--status",
+    "--status-timer", "10",
+    "-o", "`"$outputPath`""  # Output cracked passwords to file
 )
 
 # Add rule file if selected
@@ -155,6 +203,10 @@ if ($ruleFile) {
     $hashcatArgs += "-r"
     $hashcatArgs += "`"$rulePath`""
 }
+
+# Add workload value
+$hashcatArgs += "-w"
+$hashcatArgs += $workload
 
 # Display configuration summary
 Write-Host "`n========================================" -ForegroundColor Cyan
@@ -167,8 +219,10 @@ if ($ruleFile) {
 } else {
     Write-Host "Rule File:   None (skipped)" -ForegroundColor Gray
 }
+Write-Host "Workload:    $workload" -ForegroundColor White
+Write-Host "Output File: $outputFileName" -ForegroundColor White
 Write-Host "`nHashcat Command:" -ForegroundColor Yellow
-$commandLine = "hashcat " + ($hashcatArgs -join " ")
+$commandLine = "`"$hashcatExe`" " + ($hashcatArgs -join " ")
 Write-Host $commandLine -ForegroundColor Green
 Write-Host "`n========================================`n" -ForegroundColor Cyan
 
@@ -179,15 +233,51 @@ Write-Host "Press Ctrl+C to stop hashcat.`n" -ForegroundColor Yellow
 Write-Host "----------------------------------------`n" -ForegroundColor Gray
 
 try {
-    # Execute hashcat directly (not as background process) to see real-time output
-    & hashcat $hashcatArgs
+    # Change to hashcat directory so it can find OpenCL folder
+    $hashcatDir = Split-Path -Parent $hashcatExe
+    Push-Location $hashcatDir
     
-    if ($LASTEXITCODE -eq 0) {
+    # Execute hashcat directly (not as background process) to see real-time output
+    & $hashcatExe $hashcatArgs
+    
+    $exitCode = $LASTEXITCODE
+    
+    if ($exitCode -eq 0) {
         Write-Host "`nHashcat completed successfully!" -ForegroundColor Green
+    } elseif ($exitCode -eq -1) {
+        Write-Host "`nHashcat exited with error code -1." -ForegroundColor Red
+        Write-Host "Run 'hashcat -I' in the hashcat folder to check available devices." -ForegroundColor Yellow
+        Write-Host "You may need to install GPU drivers or OpenCL runtime." -ForegroundColor Yellow
     } else {
-        Write-Host "`nHashcat exited with code: $LASTEXITCODE" -ForegroundColor Yellow
+        Write-Host "`nHashcat exited with code: $exitCode" -ForegroundColor Yellow
     }
+    
+    # Show cracked passwords (runs regardless of exit code)
+    Write-Host "`n========================================" -ForegroundColor Cyan
+    Write-Host " Cracked Passwords (--show)" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+    
+    $showArgs = @("-m", "22000", "`"$hashPath`"", "--show")
+    & $hashcatExe $showArgs
+    
+    # Return to original directory
+    Pop-Location
+    
+    # Check if output file has content
+    if (Test-Path $outputPath) {
+        $crackedCount = (Get-Content $outputPath | Measure-Object -Line).Lines
+        if ($crackedCount -gt 0) {
+            Write-Host "`n========================================" -ForegroundColor Green
+            Write-Host " $crackedCount password(s) saved to:" -ForegroundColor Green
+            Write-Host " $outputPath" -ForegroundColor White
+            Write-Host "========================================" -ForegroundColor Green
+        } else {
+            Write-Host "`nNo passwords cracked yet." -ForegroundColor Yellow
+        }
+    }
+    
 } catch {
+    Pop-Location
     Write-Host "`nError executing hashcat: $_" -ForegroundColor Red
     Write-Host "Make sure hashcat is installed and available in your PATH." -ForegroundColor Yellow
     exit 1
