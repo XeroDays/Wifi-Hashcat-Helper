@@ -220,19 +220,30 @@ fi
 HASHCAT_CMD="$HASHCAT_CMD -w $WORKLOAD"
 
 # Show cracked passwords on exit (normal or Ctrl+C)
+# Uses -o file first; if empty (e.g. "All hashes in potfile"), uses hashcat -m 22000 --show
 show_cracked_passwords() {
     [[ -z "$SELECTED_HASH_PATH" ]] && return
     echo "\n${CYAN}========================================${NC}"
     echo "${CYAN} Cracked Passwords${NC}"
     echo "${CYAN}========================================${NC}"
+    CRACKED_OUTPUT=""
     if [[ -f "$OUTPUT_PATH" ]] && [[ -s "$OUTPUT_PATH" ]]; then
-        CRACKED_COUNT=$(wc -l < "$OUTPUT_PATH" | tr -d ' ')
+        CRACKED_OUTPUT=$(cat "$OUTPUT_PATH")
+    fi
+    if [[ -z "$CRACKED_OUTPUT" ]]; then
+        CRACKED_OUTPUT=$(hashcat -m 22000 --show "$SELECTED_HASH_PATH" 2>/dev/null)
+    fi
+    if [[ -n "$CRACKED_OUTPUT" ]]; then
+        CRACKED_COUNT=$(echo "$CRACKED_OUTPUT" | wc -l | tr -d ' ')
         echo "${GREEN}$CRACKED_COUNT password(s) cracked:${NC}\n"
         while IFS= read -r line; do
-            # Show password (last field after :) or whole line for hash:password
             echo "${WHITE}  $line${NC}"
-        done < "$OUTPUT_PATH"
-        echo "\n${GREEN}Saved to: ${WHITE}$OUTPUT_PATH${NC}"
+        done <<< "$CRACKED_OUTPUT"
+        if [[ -f "$OUTPUT_PATH" ]] && [[ -s "$OUTPUT_PATH" ]]; then
+            echo "\n${GREEN}Saved to: ${WHITE}$OUTPUT_PATH${NC}"
+        else
+            echo "\n${GRAY}(From potfile; use hashcat -m 22000 --show \"$SELECTED_HASH_PATH\" to view again)${NC}"
+        fi
     else
         echo "\n${YELLOW}No passwords cracked yet.${NC}"
     fi
