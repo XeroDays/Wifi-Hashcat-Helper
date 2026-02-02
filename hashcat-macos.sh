@@ -219,6 +219,26 @@ fi
 # Add workload value
 HASHCAT_CMD="$HASHCAT_CMD -w $WORKLOAD"
 
+# Show cracked passwords on exit (normal or Ctrl+C)
+show_cracked_passwords() {
+    [[ -z "$SELECTED_HASH_PATH" ]] && return
+    echo "\n${CYAN}========================================${NC}"
+    echo "${CYAN} Cracked Passwords${NC}"
+    echo "${CYAN}========================================${NC}"
+    if [[ -f "$OUTPUT_PATH" ]] && [[ -s "$OUTPUT_PATH" ]]; then
+        CRACKED_COUNT=$(wc -l < "$OUTPUT_PATH" | tr -d ' ')
+        echo "${GREEN}$CRACKED_COUNT password(s) cracked:${NC}\n"
+        while IFS= read -r line; do
+            # Show password (last field after :) or whole line for hash:password
+            echo "${WHITE}  $line${NC}"
+        done < "$OUTPUT_PATH"
+        echo "\n${GREEN}Saved to: ${WHITE}$OUTPUT_PATH${NC}"
+    else
+        echo "\n${YELLOW}No passwords cracked yet.${NC}"
+    fi
+    echo ""
+}
+
 # Display configuration summary
 echo "\n${CYAN}========================================${NC}"
 echo "${CYAN} Configuration Summary${NC}"
@@ -242,7 +262,8 @@ echo "${CYAN}Status updates will appear every 10 seconds.${NC}\n"
 echo "${YELLOW}Press Ctrl+C to stop hashcat.${NC}\n"
 echo "${GRAY}----------------------------------------${NC}\n"
 
-# Run hashcat
+# Run hashcat; EXIT trap ensures cracked passwords are shown even on Ctrl+C
+trap show_cracked_passwords EXIT
 eval $HASHCAT_CMD
 EXIT_CODE=$?
 
@@ -252,24 +273,4 @@ elif [[ $EXIT_CODE -eq 1 ]]; then
     echo "\n${GREEN}Hashcat exhausted - all passwords tried.${NC}"
 else
     echo "\n${YELLOW}Hashcat exited with code: $EXIT_CODE${NC}"
-fi
-
-# Show cracked passwords
-echo "\n${CYAN}========================================${NC}"
-echo "${CYAN} Cracked Passwords (--show)${NC}"
-echo "${CYAN}========================================${NC}"
-
-hashcat -m 22000 "$SELECTED_HASH_PATH" --show
-
-# Check if output file has content
-if [[ -f "$OUTPUT_PATH" ]]; then
-    CRACKED_COUNT=$(wc -l < "$OUTPUT_PATH" | tr -d ' ')
-    if [[ "$CRACKED_COUNT" -gt 0 ]]; then
-        echo "\n${GREEN}========================================${NC}"
-        echo "${GREEN} $CRACKED_COUNT password(s) saved to:${NC}"
-        echo "${WHITE} $OUTPUT_PATH${NC}"
-        echo "${GREEN}========================================${NC}"
-    else
-        echo "\n${YELLOW}No passwords cracked yet.${NC}"
-    fi
 fi
