@@ -5,6 +5,11 @@ Technocit
 technocit
 hazinspectme
 hazin
+haz
+inspect
+cargo
+dubai
+uae
 spectme
 hazin-spectme
 hazinspectme0 
