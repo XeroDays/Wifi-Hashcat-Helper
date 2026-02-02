@@ -1,4 +1,0 @@
-92102584eed134edc3303f443e0d8b37:50d4f7e9d1b7:484520a17b1a:TechnoCIT Software Solution 5.0:Technocit@2017
-011f00b064062cea42d7d18a4072a701:50d4f7e9d1b7:bcf10514eba5:TechnoCIT Software Solution 5.0:Technocit@2017
-088524a3572b1b456231469aa49250b8:50d4f7e9d1b7:484520a17b1a:TechnoCIT Software Solution 5.0:Technocit@2017
-64346caa79d69a1399164a9289d0ce35:50d4f7e9d1b7:bcf10514eba5:TechnoCIT Software Solution 5.0:Technocit@2017
