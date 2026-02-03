@@ -1,0 +1,12 @@
+git clone https://github.com/XeroDays/Wifi-Hashcat-Helper.git
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK8gCu9dkrbujaUn/17Z0A6tsIn+5I7CO4a1Re5k7r3b
+
+apt update
+apt install -y hashcat
+
+cd Wifi-Hashcat-Helper
+chmod +x hashcat-linux.sh
+./hashcat-linux.sh
+
+
