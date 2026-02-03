@@ -8,10 +8,7 @@ Approximate `-m 22000` speeds by GPU. Avg Speed values are GPT-based; Actual (Te
 
 | GPU                          | Avg Speed (GPT)      | Actual (Tested) |
 | ---------------------------- | -------------------- | --------------- |
-| 40 GB Host GPU               | ~3 400 – 3 600 kH/s   | -               |
-| L40S 45 GB (Taiwan)          | ~3 100 – 3 300 kH/s   | -               |
-| L40S 45 GB (Taiwan, variant) | ~3 100 – 3 300 kH/s   | -               |
-| L40S 45 GB (Turkiye)         | ~3 000 – 3 200 kH/s   | -               |
+| L40S 45 GB        | ~3 000 – 3 200 kH/s   | -               |
 | Q RTX 8000 45 GB             | ~1 900 – 2 200 kH/s   | -               |
 | A40 45 GB                    | ~1 700 – 1 900 kH/s   | -               |
 | RTX 5080 16 GB               | ~1 400 – 1 650 kH/s   | -               |
