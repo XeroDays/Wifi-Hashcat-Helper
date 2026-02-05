@@ -22,10 +22,11 @@ To Download File:
 wget -c URL
 wget -c https://weakpass.com/download/2012/weakpass_4.txt.7z
 7z x weakpass_4.txt.7z
- 
+
 
 
 cd Wifi-Hashcat-Helper
+cd ..
 chmod +x hashcat-linux.sh
 ./hashcat-linux.sh
 
