@@ -12,6 +12,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK8gCu9dkrbujaUn/17Z0A6tsIn+5I7CO4a1Re5k7r3b
 
 To Download File:
 wget -c URL
+wget -c https://weakpass.com/download/2012/weakpass_4.txt.7z
 
 apt update
 apt install -y hashcat
