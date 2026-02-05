@@ -6,24 +6,25 @@ Interactive tool for WPA2/WPA3 password cracking with hashcat.
 
 Approximate `-m 22000` speeds by GPU. Avg Speed values are GPT-based; Actual (Tested) is left as `-` until measured.
 
-| GPU                          | Avg Speed (GPT)      | Actual (Tested) |
-| ---------------------------- | -------------------- | --------------- |
-| L40S 45 GB        | ~3 000 – 3 200 kH/s   | -               |
-| Q RTX 8000 45 GB             | ~1 900 – 2 200 kH/s   | -               |
-| A40 45 GB                    | ~1 700 – 1 900 kH/s   | -               |
-| RTX 5080 16 GB               | ~1 400 – 1 650 kH/s   | -               |
-| RTX 5070 Ti 16 GB            | ~1 200 – 1 400 kH/s   | -               |
-| RTX 4500 Ada 24 GB           | ~1 200 – 1 400 kH/s   | -               |
-| RTX 5070 12 GB               | ~1 050 – 1 250 kH/s   | -               |
-| RTX 4070 Super 12 GB         | ~950 – 1 100 kH/s     | -               |
-| RTX 5060 Ti 16 GB            | ~850 – 1 000 kH/s     | -               |
-| RTX 4070 12 GB               | ~750 – 900 kH/s       | -               |
-| RTX 3070 Ti 8 GB             | ~650 – 800 kH/s       | -               |
-| RTX 4060 Ti 16 GB            | ~600 – 700 kH/s       | -               |
-| RTX 2060 Super 8 GB          | ~400 – 550 kH/s       | -               |
-| RTX 3060 12 GB               | ~390 – 420 kH/s       | -               |
-| RTX A4000 16 GB              | ~300 – 400 kH/s       | -               |
-| GTX 1660 6 GB                | ~250 – 350 kH/s       | -               |
+| GPU                          | Avg Speed (GPT)      | Actual (Tested) | Weakpass_4 |
+| ---------------------------- | -------------------- | --------------- | ---------- |
+| L40S 45 GB                   | ~3 000 – 3 200 kH/s   | -               | -          |
+| Q RTX 8000 45 GB             | ~1 900 – 2 200 kH/s   | -               | -          |
+| A40 45 GB                    | ~1 700 – 1 900 kH/s   | -               | -          |
+| RTX 5080 16 GB               | ~1 400 – 1 650 kH/s   | -               | -          |
+| RTX 5070 Ti 16 GB            | ~1 200 – 1 400 kH/s   | -               | -          |
+| RTX 4500 Ada 24 GB           | ~1 200 – 1 400 kH/s   | -               | -          |
+| RTX 5070 12 GB               | ~1 050 – 1 250 kH/s   | -               | -          |
+| RTX 4070 Super 12 GB         | ~950 – 1 100 kH/s     | -               | -          |
+| RTX 5060 Ti 16 GB 36 MCU     | ~850 – 1 000 kH/s     | 688 kH/s        | 2h 40m     |
+| RTX 4070 12 GB               | ~750 – 900 kH/s       | -               | -          |
+| 2x NVIDIA GeForce RTX 3060   | ~780 – 840 kH/s       | 710 kH/s        | 2h 34m     |
+| RTX 3070 Ti 8 GB             | ~650 – 800 kH/s       | -               | -          |
+| RTX 4060 Ti 16 GB            | ~600 – 700 kH/s       | -               | -          |
+| RTX 2060 Super 8 GB          | ~400 – 550 kH/s       | -               | -          |
+| RTX 3060 12 GB               | ~390 – 420 kH/s       | 490 kH/s        | -          |
+| RTX A4000 16 GB              | ~300 – 400 kH/s       | -               | -          |
+| GTX 1660 6 GB                | ~250 – 350 kH/s       | -               | -          |
 
 ## Folder Structure
 
@@ -53,7 +54,7 @@ Approximate `-m 22000` speeds by GPU. Avg Speed values are GPT-based; Actual (Te
 3. Edit `hashcat-windows.ps1` line 12 to set your hashcat path:
    ```powershell
    $hashcatPath = "C:\hashcat\hashcat.exe"
-   ```
+   ```ss
 
 ### Linux
 
