@@ -1,11 +1,32 @@
-git clone https://github.com/XeroDays/Wifi-Hashcat-Helper.git
 
+
+Generate Key (Windows): 
+ssh-keygen -t ed25519 -C "vast-ai"
+type $env:USERPROFILE\.ssh\id_ed25519.pub
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOV31m/yAx7W3D8N6RHt682E923cbwpj3Ktm3smbf6ee
+
+ 
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK8gCu9dkrbujaUn/17Z0A6tsIn+5I7CO4a1Re5k7r3b
+
+
+
+git clone https://github.com/XeroDays/Wifi-Hashcat-Helper.git
 
 apt update
 apt install -y hashcat
+sudo apt install -y p7zip-full 
+cd Wifi-Hashcat-Helper/dicts
+
+
+To Download File:
+wget -c URL
+wget -c https://weakpass.com/download/2012/weakpass_4.txt.7z
+7z x weakpass_4.txt.7z
+
+
 
 cd Wifi-Hashcat-Helper
+cd ..
 chmod +x hashcat-linux.sh
 ./hashcat-linux.sh
 
