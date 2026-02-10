@@ -45,3 +45,37 @@ wget -c https://weakpass.com/download/2012/weakpass_4.txt.7z
 - **Crack Rate:** 35.01%
 - **Unique:** 98.59%
 - **Popular:** 99.56%
+
+---
+
+## Wordlist 4: hashpwn
+
+**Commands:**
+```bash
+wget -c https://weakpass.com/download/2080/hashpwn.txt.7z
+7z x hashpwn.txt.7z
+```
+
+**Details:**
+- **Size:** 3.29GB → 14.11GB
+- **Crack Rate:** 33.26%
+- **Unique:** 98.16%
+- **Popular:** 98.96%
+
+
+---
+
+## Wordlist 4: dictionary_private
+
+**Commands:**
+```bash
+wget -c https://weakpass.com/download/1930/dictionary_private.dic.7z
+7z x dictionary_private.txt.7z
+```
+
+**Details:**
+- **Size:** 1.26GB → 2.66GB
+- **Crack Rate:** 24.86%
+- **Unique:**  22.44%
+- **Popular:** 95.48%
+
