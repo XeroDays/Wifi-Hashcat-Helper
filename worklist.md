@@ -70,7 +70,7 @@ wget -c https://weakpass.com/download/2080/hashpwn.txt.7z
 **Commands:**
 ```bash
 wget -c https://weakpass.com/download/1930/dictionary_private.dic.7z
-7z x dictionary_private.txt.7z
+7z x dictionary_private.dic.7z
 ```
 
 **Details:**
