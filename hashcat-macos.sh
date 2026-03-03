@@ -219,6 +219,18 @@ fi
 # Add workload value
 HASHCAT_CMD="$HASHCAT_CMD -w $WORKLOAD"
 
+# Optional: ignore potfile (useful to re-crack already-cracked hashes)
+POTFILE_DISABLE_ENABLED=0
+echo ""
+echo "${GREEN}=== Potfile Option (Optional) ===${NC}"
+echo "${YELLOW}Add --potfile-disable to ignore the potfile (re-crack even if already cracked)?${NC}"
+echo -n "Enter = default (no), Y = yes: "
+read potfile_choice
+if [[ "$potfile_choice" == "Y" || "$potfile_choice" == "y" ]]; then
+    HASHCAT_CMD="$HASHCAT_CMD --potfile-disable"
+    POTFILE_DISABLE_ENABLED=1
+fi
+
 # Show cracked passwords on exit (normal or Ctrl+C)
 # Uses -o file first; if empty (e.g. "All hashes in potfile"), uses hashcat -m 22000 --show
 show_cracked_passwords() {
@@ -230,7 +242,7 @@ show_cracked_passwords() {
     if [[ -f "$OUTPUT_PATH" ]] && [[ -s "$OUTPUT_PATH" ]]; then
         CRACKED_OUTPUT=$(cat "$OUTPUT_PATH")
     fi
-    if [[ -z "$CRACKED_OUTPUT" ]]; then
+    if [[ -z "$CRACKED_OUTPUT" ]] && [[ $POTFILE_DISABLE_ENABLED -eq 0 ]]; then
         CRACKED_OUTPUT=$(hashcat -m 22000 --show "$SELECTED_HASH_PATH" 2>/dev/null)
     fi
     if [[ -n "$CRACKED_OUTPUT" ]]; then
@@ -245,7 +257,11 @@ show_cracked_passwords() {
             echo "\n${GRAY}(From potfile; use hashcat -m 22000 --show \"$SELECTED_HASH_PATH\" to view again)${NC}"
         fi
     else
-        echo "\n${YELLOW}No passwords cracked yet.${NC}"
+        if [[ $POTFILE_DISABLE_ENABLED -eq 1 ]]; then
+            echo "\n${YELLOW}No passwords captured in output file yet (potfile was disabled).${NC}"
+        else
+            echo "\n${YELLOW}No passwords cracked yet.${NC}"
+        fi
     fi
     echo ""
 }
@@ -266,6 +282,10 @@ echo "${WHITE}Output File: $OUTPUT_FILE${NC}"
 echo "\n${YELLOW}Hashcat Command:${NC}"
 echo "${GREEN}$HASHCAT_CMD${NC}"
 echo "\n${CYAN}========================================${NC}\n"
+
+# Confirm before starting hashcat so the user can review the command
+echo -n "${YELLOW}Press Enter to start hashcat (or Ctrl+C to cancel)... ${NC}"
+read _
 
 # Execute hashcat
 echo "${GREEN}Starting hashcat...${NC}\n"

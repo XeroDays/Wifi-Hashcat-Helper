@@ -30,4 +30,6 @@ cd ..
 chmod +x hashcat-linux.sh
 ./hashcat-linux.sh
 
+https://seth-stumpier-ophelia.ngrok-free.dev
+
 
