@@ -17,7 +17,7 @@ Approximate `-m 22000` speeds by GPU. Avg Speed values are GPT-based; Actual (Te
 | RTX 5070 12 GB               | ~1 150 kH/s      | -               | -          | -       |
 | RTX 4070 Super 12 GB         | ~1 025 kH/s      | -               | -          | -       |
 | RTX 5060 Ti 16 GB 36 MCU     | ~925 kH/s        | 688 kH/s        | -          | -       |
-| 2x RTX 5060 Ti 16 GB 36 MCU  | ~1 850 kH/s      | 1180 kH/s       | 29m        | 0.143$  |
+| 2x RTX 5060 Ti 16 GB 36 MCU  | ~1 850 kH/s      | 1180 kH/s       | 29m        | 0.127$  |
 | RTX 4070 12 GB               | ~825 kH/s        | -               | -          | -       |
 | 2x  RTX 3060 28 MCU          | ~810 kH/s        | 710 kH/s        | -          | -       |
 | RTX 3070 Ti 8 GB             | ~725 kH/s        | -               | -          | -       |
@@ -184,3 +184,28 @@ hcxpcapngtool -o output.hc22000 capture.pcapng
 ```
 
 Or use online converters like https://hashcat.net/cap2hashcat/
+
+
+
+## How to use Screen | Parallel Running
+```
+screen -r mydownload
+```
+You'll see the download still running with its progress.
+ 
+
+
+ 
+### Useful screen commands
+
+| Command | What it does |
+|---|---|
+| `screen -ls` | List all running sessions |
+| `screen -r mydownload` | Reattach to a session |
+| `Ctrl+A, D` | Detach (leave running) |
+| `Ctrl+A, C` | Create a new window inside screen |
+| `Ctrl+A, N` | Switch to next window |
+| `Ctrl+A, "` | List all windows |
+| `exit` | Kill the current screen session |
+
+---
