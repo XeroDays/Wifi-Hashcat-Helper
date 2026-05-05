@@ -3,9 +3,11 @@
 Generate Key (Windows): 
 ssh-keygen -t ed25519 -C "vast-ai"
 type $env:USERPROFILE\.ssh\id_ed25519.pub
+
+Windows:
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOV31m/yAx7W3D8N6RHt682E923cbwpj3Ktm3smbf6ee
 
- 
+MacOs:
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK8gCu9dkrbujaUn/17Z0A6tsIn+5I7CO4a1Re5k7r3b
 
 
@@ -29,6 +31,10 @@ cd Wifi-Hashcat-Helper
 cd ..
 chmod +x hashcat-linux.sh
 ./hashcat-linux.sh
+
+
+
+
 
 https://seth-stumpier-ophelia.ngrok-free.dev
 

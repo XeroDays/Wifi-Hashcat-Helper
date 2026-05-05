@@ -16,7 +16,7 @@ Approximate `-m 22000` speeds by GPU. Avg Speed values are GPT-based; Actual (Te
 | RTX 4500 Ada 24 GB           | ~1 300 kH/s      | -               | -          | -       |
 | RTX 5070 12 GB               | ~1 150 kH/s      | -               | -          | -       |
 | RTX 4070 Super 12 GB         | ~1 025 kH/s      | -               | -          | -       |
-| RTX 5060 Ti 16 GB 36 MCU     | ~925 kH/s        | 688 kH/s        | -          | -       |
+| 1x RTX 5060 Ti 16 GB         | ~925 kH/s        | 612 kH/s        | 51m        | 0.089$  |
 | 2x RTX 5060 Ti 16 GB 36 MCU  | ~1 850 kH/s      | 1180 kH/s       | 29m        | 0.127$  |
 | RTX 4070 12 GB               | ~825 kH/s        | -               | -          | -       |
 | 2x  RTX 3060 28 MCU          | ~810 kH/s        | 710 kH/s        | -          | -       |
