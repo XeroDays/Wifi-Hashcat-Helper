@@ -79,3 +79,23 @@ wget -c https://weakpass.com/download/1930/dictionary_private.dic.7z
 - **Unique:**  22.44%
 - **Popular:** 95.48%
 
+
+
+---
+
+## Wordlist 5: Crack Station
+
+**Commands:**
+```bash
+wget -c https://crackstation.net/files/crackstation.txt.gz
+7z x crackstation.txt.gz
+```
+
+**Details:**
+- **Size:** 4.2GB → 15GB
+- **Crack Rate:** ??%
+- **Unique:**  ??%
+- **Popular:** ??%
+
+
+
