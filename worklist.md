@@ -99,3 +99,24 @@ wget -c https://crackstation.net/files/crackstation.txt.gz
 
 
 
+---
+
+## Wordlist 6: all-h
+
+**Commands:**
+```bash
+wget -c https://weakpass.com/download/2085/all-h.txt.7z
+7z x all-h.txt.7z
+```
+
+**Details:**
+- **Rank:** S
+- **Size:** 6.70GB → 28.51GB
+- **Crack Rate:** 38.50%
+- **Unique:**  99.44%
+- **Popular:** 100%
+
+
+
+
+

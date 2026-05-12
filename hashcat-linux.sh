@@ -6,7 +6,6 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HASHES_DIR="$SCRIPT_DIR/hashes"
 DICTS_DIR="$SCRIPT_DIR/dicts"
-RULES_DIR="$SCRIPT_DIR/rules"
 OUTPUT_DIR="$SCRIPT_DIR/output"
 
 # Colors
@@ -21,8 +20,7 @@ NC='\033[0m' # No Color
 # Function to display menu and get user selection
 show_menu() {
     local title="$1"
-    local optional="$2"
-    shift 2
+    shift
     local items=("$@")
     
     echo -e "\n${CYAN}========================================${NC}"
@@ -33,25 +31,11 @@ show_menu() {
         echo -e "  ${YELLOW}[$((i + 1))] ${items[$i]}${NC}"
     done
     
-    if [ "$optional" = "true" ]; then
-        echo -e "  ${GRAY}[0] Skip (Optional)${NC}"
-    fi
-    
     echo ""
     
     while true; do
-        if [ "$optional" = "true" ]; then
-            read -p "Select an option (Enter for Skip/0): " selection
-        else
-            read -p "Select an option: " selection
-        fi
+        read -p "Select an option: " selection
         
-        # Handle empty input as 0 (Skip) when optional
-        if [ "$optional" = "true" ] && [ -z "$selection" -o "$selection" = "0" ]; then
-            return 0
-        fi
-        
-        # Validate selection
         if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#items[@]}" ]; then
             return "$selection"
         fi
@@ -79,7 +63,7 @@ select_hash_file() {
         exit 1
     fi
     
-    show_menu "Select Hash File" "false" "${hash_files[@]}"
+    show_menu "Select Hash File" "${hash_files[@]}"
     local selection=$?
     SELECTED_HASH_FILE="${hash_files[$((selection - 1))]}"
     SELECTED_HASH_PATH="$HASHES_DIR/$SELECTED_HASH_FILE"
@@ -104,47 +88,10 @@ select_dict_file() {
         exit 1
     fi
     
-    show_menu "Select Dictionary File" "false" "${dict_files[@]}"
+    show_menu "Select Dictionary File" "${dict_files[@]}"
     local selection=$?
     SELECTED_DICT_FILE="${dict_files[$((selection - 1))]}"
     SELECTED_DICT_PATH="$DICTS_DIR/$SELECTED_DICT_FILE"
-}
-
-# Function to select rule file (optional)
-select_rule_file() {
-    echo -e "\n${GREEN}=== Rule File Selection (Optional) ===${NC}"
-    
-    if [ ! -d "$RULES_DIR" ]; then
-        echo -e "${YELLOW}Warning: Rules directory not found: $RULES_DIR${NC}"
-        echo -e "${YELLOW}Skipping rule selection...${NC}"
-        SELECTED_RULE_FILE=""
-        SELECTED_RULE_PATH=""
-        return
-    fi
-    
-    local rule_files=()
-    while IFS= read -r -d '' file; do
-        rule_files+=("$(basename "$file")")
-    done < <(find "$RULES_DIR" -maxdepth 1 -name "*.rule" -type f -print0 | sort -z)
-    
-    if [ ${#rule_files[@]} -eq 0 ]; then
-        echo -e "${YELLOW}No .rule files found in $RULES_DIR${NC}"
-        echo -e "${YELLOW}Skipping rule selection...${NC}"
-        SELECTED_RULE_FILE=""
-        SELECTED_RULE_PATH=""
-        return
-    fi
-    
-    show_menu "Select Rule File" "true" "${rule_files[@]}"
-    local selection=$?
-    
-    if [ $selection -eq 0 ]; then
-        SELECTED_RULE_FILE=""
-        SELECTED_RULE_PATH=""
-    else
-        SELECTED_RULE_FILE="${rule_files[$((selection - 1))]}"
-        SELECTED_RULE_PATH="$RULES_DIR/$SELECTED_RULE_FILE"
-    fi
 }
 
 # Get workload value
@@ -185,7 +132,6 @@ fi
 # Select files
 select_hash_file
 select_dict_file
-select_rule_file
 get_workload
 
 # Create output directory if it doesn't exist
@@ -199,11 +145,6 @@ OUTPUT_PATH="$OUTPUT_DIR/$OUTPUT_FILE"
 
 # Build hashcat command
 HASHCAT_CMD="hashcat -m 22000 -a 0 \"$SELECTED_HASH_PATH\" \"$SELECTED_DICT_PATH\" --status --status-timer 10 -o \"$OUTPUT_PATH\""
-
-# Add rule file if selected
-if [ -n "$SELECTED_RULE_PATH" ]; then
-    HASHCAT_CMD="$HASHCAT_CMD -r \"$SELECTED_RULE_PATH\""
-fi
 
 # Add workload value
 HASHCAT_CMD="$HASHCAT_CMD -w $WORKLOAD"
@@ -245,11 +186,6 @@ echo -e "${CYAN} Configuration Summary${NC}"
 echo -e "${CYAN}========================================${NC}"
 echo -e "${WHITE}Hash File:   $SELECTED_HASH_FILE${NC}"
 echo -e "${WHITE}Dictionary:  $SELECTED_DICT_FILE${NC}"
-if [ -n "$SELECTED_RULE_FILE" ]; then
-    echo -e "${WHITE}Rule File:   $SELECTED_RULE_FILE${NC}"
-else
-    echo -e "${GRAY}Rule File:   None (skipped)${NC}"
-fi
 echo -e "${WHITE}Workload:    $WORKLOAD${NC}"
 echo -e "${WHITE}Output File: $OUTPUT_FILE${NC}"
 echo -e "\n${YELLOW}Hashcat Command:${NC}"

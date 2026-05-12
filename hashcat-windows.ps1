@@ -5,7 +5,6 @@
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $hashesDir = Join-Path $scriptDir "hashes"
 $dictsDir = Join-Path $scriptDir "dicts"
-$rulesDir = Join-Path $scriptDir "rules"
 $outputDir = Join-Path $scriptDir "output"
 
 # Hashcat executable path - Set this to your hashcat.exe full path, or leave empty to use PATH
@@ -16,8 +15,7 @@ $hashcatPath = "C:\hashcat\hashcat.exe"
 function Show-Menu {
     param(
         [string]$Title,
-        [array]$Items,
-        [bool]$Optional = $false
+        [array]$Items
     )
     
     Write-Host "`n========================================" -ForegroundColor Cyan
@@ -28,24 +26,10 @@ function Show-Menu {
         Write-Host "  [$($i + 1)] $($Items[$i].Name)" -ForegroundColor Yellow
     }
     
-    if ($Optional) {
-        Write-Host "  [0] Skip (Optional)" -ForegroundColor Gray
-    }
-    
     Write-Host ""
     
     while ($true) {
-        if ($Optional) {
-            $prompt = "Select an option (Enter for Skip/0)"
-        } else {
-            $prompt = "Select an option"
-        }
-        $selection = Read-Host $prompt
-        
-        # Handle empty input as 0 (Skip) when optional
-        if ($Optional -and ($selection -eq "" -or $selection -eq "0")) {
-            return $null
-        }
+        $selection = Read-Host "Select an option"
         
         $parsedValue = 0
         if ([int]::TryParse($selection, [ref]$parsedValue) -and $parsedValue -ge 1 -and $parsedValue -le $Items.Count) {
@@ -96,28 +80,6 @@ function Select-DictionaryFile {
     return $selected
 }
 
-# Function to select rule file (optional)
-function Select-RuleFile {
-    Write-Host "`n=== Rule File Selection (Optional) ===" -ForegroundColor Green
-    
-    if (-not (Test-Path $rulesDir)) {
-        Write-Host "Warning: Rules directory not found: $rulesDir" -ForegroundColor Yellow
-        Write-Host "Skipping rule selection..." -ForegroundColor Yellow
-        return $null
-    }
-    
-    $ruleFiles = Get-ChildItem -Path $rulesDir -Filter "*.rule" -File | Sort-Object Name
-    
-    if ($ruleFiles.Count -eq 0) {
-        Write-Host "No .rule files found in $rulesDir" -ForegroundColor Yellow
-        Write-Host "Skipping rule selection..." -ForegroundColor Yellow
-        return $null
-    }
-    
-    $selected = Show-Menu -Title "Select Rule File" -Items $ruleFiles -Optional $true
-    return $selected
-}
-
 # Determine hashcat executable path
 if ($hashcatPath -eq "" -or -not (Test-Path $hashcatPath)) {
     # Try to find hashcat in PATH
@@ -154,9 +116,6 @@ if (-not $dictFile) {
     Write-Host "Error: Dictionary file selection is mandatory!" -ForegroundColor Red
     exit 1
 }
-
-# Select rule file (optional)
-$ruleFile = Select-RuleFile
 
 # Get workload value
 Write-Host "`n=== Workload Configuration ===" -ForegroundColor Green
@@ -197,13 +156,6 @@ $hashcatArgs = @(
     "-o", "`"$outputPath`""  # Output cracked passwords to file
 )
 
-# Add rule file if selected
-if ($ruleFile) {
-    $rulePath = $ruleFile.FullName
-    $hashcatArgs += "-r"
-    $hashcatArgs += "`"$rulePath`""
-}
-
 # Add workload value
 $hashcatArgs += "-w"
 $hashcatArgs += $workload
@@ -214,11 +166,6 @@ Write-Host " Configuration Summary" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Hash File:   $($hashFile.Name)" -ForegroundColor White
 Write-Host "Dictionary:  $($dictFile.Name)" -ForegroundColor White
-if ($ruleFile) {
-    Write-Host "Rule File:   $($ruleFile.Name)" -ForegroundColor White
-} else {
-    Write-Host "Rule File:   None (skipped)" -ForegroundColor Gray
-}
 Write-Host "Workload:    $workload" -ForegroundColor White
 Write-Host "Output File: $outputFileName" -ForegroundColor White
 Write-Host "`nHashcat Command:" -ForegroundColor Yellow
