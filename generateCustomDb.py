@@ -10,7 +10,6 @@ from __future__ import annotations
 import re
 import sys
 import time
-from itertools import permutations, product
 from pathlib import Path
 
 
@@ -18,6 +17,10 @@ def rule(symbol: str, description: str) -> tuple[str, str, object]:
     """Build a rule tuple by parsing the symbol string.
 
     Supported patterns:
+      {N~M}          — standalone numbers N to M, no word prefix
+                       e.g. {1~100} → 1, 2 … 100, 01 … 09, 001 … 099
+      LITERAL{N~M}   — fixed literal prefix + looped numbers, no word involved
+                       e.g. 033{1~9999} → 0331, 0332 … 0339999, 03301 … 03309 …
       {$}          — word as-is
       {C}          — capitalize first letter
       {$}{N~M}       — word + looped numbers N to M
@@ -37,12 +40,24 @@ def rule(symbol: str, description: str) -> tuple[str, str, object]:
       width-2:  word@01 … word@09
       width-3:  word@001 … word@099
     """
+    # Matches standalone {N~M} — no word base, numbers only
+    m_numonly   = re.fullmatch(r"\{(\d+)~(\d+)\}",               symbol)
+    # Matches LITERAL{N~M} — fixed string prefix + range, no word base
+    m_litprefix = re.fullmatch(r"(.+)\{(\d+)~(\d+)\}",           symbol)
     # Matches {$}OPTIONAL_PREFIX{N~M}  — the prefix may be empty
-    m_range = re.fullmatch(r"\{(\$|C)\}(.*)\{(\d+)~(\d+)\}", symbol)
-    m_base  = re.fullmatch(r"\{(\$|C)\}",                     symbol)
-    m_lit   = re.fullmatch(r"\{(\$|C)\}(.+)",                 symbol)
+    m_range     = re.fullmatch(r"\{(\$|C)\}(.*)\{(\d+)~(\d+)\}", symbol)
+    m_base      = re.fullmatch(r"\{(\$|C)\}",                     symbol)
+    m_lit       = re.fullmatch(r"\{(\$|C)\}(.+)",                 symbol)
 
-    if m_range:
+    if m_numonly:
+        base, prefix, suffix = None, "", None
+        start, end = m_numonly.group(1), m_numonly.group(2)
+    elif m_litprefix and not m_range:
+        base, suffix = None, None
+        prefix = m_litprefix.group(1)
+        start  = m_litprefix.group(2)
+        end    = m_litprefix.group(3)
+    elif m_range:
         base   = m_range.group(1)
         prefix = m_range.group(2)   # e.g. "@" or "" for plain {$}{N~M}
         start  = m_range.group(3)
@@ -57,6 +72,17 @@ def rule(symbol: str, description: str) -> tuple[str, str, object]:
         raise ValueError(f"Unrecognized rule symbol: {symbol!r}")
 
     def transform(w: str) -> str | list[str]:
+        if base is None:
+            # Standalone or literal-prefix number range — word is ignored entirely
+            a, b = int(start), int(end)
+            results = [f"{prefix}{n}" for n in range(a, b + 1)]
+            if len(str(b)) >= 2:
+                for k in range(2, len(str(b)) + 1):
+                    for n in range(a, b + 1):
+                        p = str(n).zfill(k)
+                        if p != str(n):
+                            results.append(f"{prefix}{p}")
+            return results
         word = w[0].upper() + w[1:] if (base == "C" and w) else w
         if suffix is not None:
             return f"{word}{suffix}"
@@ -81,12 +107,11 @@ def rule(symbol: str, description: str) -> tuple[str, str, object]:
 # ---------------------------------------------------------------------------
 RULES = [
     rule("{$}",          "Word as-is"),
-    rule("{$}{1~10000}", "Word + {number} 1 to 10000"),
-    rule("{$}@{1~10000}", "Word + {number} 1 to 10000"), 
-    rule("{$}!{1~10000}", "Word + {number} 1 to 10000"), 
-    rule("{$}${1~10000}", "Word + {number} 1 to 10000"), 
-    rule("{$}#{1~10000}", "Word + {number} 1 to 10000"), 
-    rule("{1~10000}", "  {number} 1 to 10000"), 
+    rule("{$}{1~99999}", "Word + {number} 1 to 10000"),
+    rule("{$}@{1~99999}", "Word + {number} 1 to 10000"), 
+    rule("{$}!{1~99999}", "Word + {number} 1 to 10000"), 
+    rule("{$}${1~99999}", "Word + {number} 1 to 10000"), 
+    rule("{$}#{1~99999}", "Word + {number} 1 to 10000"),   
     
 ]
 
@@ -110,31 +135,20 @@ def _cap(w: str) -> str:
 
 
 def expand_combinations(words: list[str]) -> list[str]:
-    """Return all ordered concatenations of the input words with capitalisation variants.
+    """Return casing variants for each word — no cross-word combinations.
 
-    For every permutation of every non-empty subset (length 1 … n):
-      - Each word segment can independently be lowercase, Title-case, or UPPERCASE.
-      - All combos of a k-word permutation are produced and joined. 
+    For each word three variants are produced (skipping duplicates):
+      1. as-is (lowercase)
+      2. Title-case  (first letter uppercased)
+      3. UPPERCASE   (all letters uppercased)
     """
     seen: dict[str, None] = {}
     result: list[str] = []
-    for length in range(1, len(words) + 1):
-        for perm in permutations(words, length):
-            variants: list[list[str]] = []
-            for w in perm:
-                caps: list[str] = [w]
-                c = _cap(w)
-                if c != w:
-                    caps.append(c)
-                u = w.upper()
-                if u != w and u not in caps:
-                    caps.append(u)
-                variants.append(caps)
-            for combo in product(*variants):
-                combined = "".join(combo)
-                if combined not in seen:
-                    seen[combined] = None
-                    result.append(combined)
+    for w in words:
+        for variant in (w, _cap(w), w.upper()):
+            if variant not in seen:
+                seen[variant] = None
+                result.append(variant)
     return result
 
 
