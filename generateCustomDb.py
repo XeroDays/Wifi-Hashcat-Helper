@@ -1,37 +1,98 @@
 #!/usr/bin/env python3
-"""Expand each line in dicts/0.txt using every *.rule file in rules/ via hashcat --stdout into dicts/customgenerated.txt.
+"""Generate dicts/customgenerated.txt by applying custom rules to every word in dicts/0.txt.
 
-Multiple ``-r`` flags chain/stack rule sets (Cartesian-style limits); this script merges all ``*.rule`` files into one temporary rule file so every rule line applies without chaining limits.
+Rules are declared as a static list near the top of this file — add new entries there.
+Each rule is a tuple of (symbol, description, transform_fn).
 """
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
+import re
 import sys
-import tempfile
+import time
+from itertools import permutations, product
 from pathlib import Path
+
+
+def rule(symbol: str, description: str) -> tuple[str, str, object]:
+    """Build a rule tuple by parsing the symbol string.
+
+    Supported patterns:
+      {$}          — word as-is
+      {C}          — capitalize first letter
+      {$}{N~M}       — word + looped numbers N to M
+                       e.g. {$}{1~100} → word1, word2 … word100
+      {C}{N~M}       — capitalized word + looped numbers
+      {$}PREFIX{N~M} — word + literal PREFIX + looped numbers
+                       e.g. {$}@{1~100} → word@1, word@2 … word@100
+      {C}PREFIX{N~M} — capitalized word + PREFIX + looped numbers
+      {$}TEXT        — word + TEXT as a plain literal (no loop, single output)
+                       e.g. {$}@gmail.com → word@gmail.com
+      {C}TEXT        — capitalized word + TEXT literal
+
+    For any numeric range, when M has 2+ digits, zero-padded variants are
+    also emitted for widths 2 … len(str(M)), skipping forms identical to plain.
+    Example for {$}@{1~100}:
+      plain:    word@1 … word@100
+      width-2:  word@01 … word@09
+      width-3:  word@001 … word@099
+    """
+    # Matches {$}OPTIONAL_PREFIX{N~M}  — the prefix may be empty
+    m_range = re.fullmatch(r"\{(\$|C)\}(.*)\{(\d+)~(\d+)\}", symbol)
+    m_base  = re.fullmatch(r"\{(\$|C)\}",                     symbol)
+    m_lit   = re.fullmatch(r"\{(\$|C)\}(.+)",                 symbol)
+
+    if m_range:
+        base   = m_range.group(1)
+        prefix = m_range.group(2)   # e.g. "@" or "" for plain {$}{N~M}
+        start  = m_range.group(3)
+        end    = m_range.group(4)
+        suffix = None
+    elif m_base:
+        base, prefix, start, end, suffix = m_base.group(1), "", None, None, None
+    elif m_lit:
+        base, prefix, start, end = m_lit.group(1), "", None, None
+        suffix = m_lit.group(2)
+    else:
+        raise ValueError(f"Unrecognized rule symbol: {symbol!r}")
+
+    def transform(w: str) -> str | list[str]:
+        word = w[0].upper() + w[1:] if (base == "C" and w) else w
+        if suffix is not None:
+            return f"{word}{suffix}"
+        if start is not None:
+            a, b = int(start), int(end)
+            results = [f"{word}{prefix}{n}" for n in range(a, b + 1)]
+            if len(str(b)) >= 2:
+                for k in range(2, len(str(b)) + 1):
+                    for n in range(a, b + 1):
+                        p = str(n).zfill(k)
+                        if p != str(n):
+                            results.append(f"{word}{prefix}{p}")
+            return results
+        return word
+
+    return (symbol, description, transform)
+
+
+# ---------------------------------------------------------------------------
+# Custom rule definitions
+# Add new rules here — only the symbol string and a description are needed.
+# ---------------------------------------------------------------------------
+RULES = [
+    rule("{$}",          "Word as-is"),
+    rule("{$}{1~10000}", "Word + {number} 1 to 10000"),
+    rule("{$}@{1~10000}", "Word + {number} 1 to 10000"), 
+    rule("{$}!{1~10000}", "Word + {number} 1 to 10000"), 
+    rule("{$}${1~10000}", "Word + {number} 1 to 10000"), 
+    rule("{$}#{1~10000}", "Word + {number} 1 to 10000"), 
+    rule("{1~10000}", "  {number} 1 to 10000"), 
+    
+]
 
 
 def script_root() -> Path:
     return Path(__file__).resolve().parent
-
-
-def resolve_hashcat() -> Path | None:
-    env = os.environ.get("HASHCAT_PATH")
-    if env:
-        p = Path(env).expanduser()
-        if p.is_file():
-            return p.resolve()
-    for name in ("hashcat.exe", "hashcat"):
-        found = shutil.which(name)
-        if found:
-            return Path(found).resolve()
-    default = Path(r"C:\hashcat\hashcat.exe")
-    if default.is_file():
-        return default.resolve()
-    return None
 
 
 def load_base_words(path: Path) -> list[str]:
@@ -44,42 +105,46 @@ def load_base_words(path: Path) -> list[str]:
     return words
 
 
-def discover_rule_files(rules_dir: Path) -> list[Path]:
-    return sorted(p.resolve() for p in rules_dir.glob("*.rule") if p.is_file())
+def _cap(w: str) -> str:
+    return w[0].upper() + w[1:] if w else w
 
 
-def strip_utf8_bom(raw: bytes) -> bytes:
-    return raw[3:] if raw.startswith(b"\xef\xbb\xbf") else raw
+def expand_combinations(words: list[str]) -> list[str]:
+    """Return all ordered concatenations of the input words with capitalisation variants.
 
-
-def write_merged_rules(rule_files: list[Path], out_path: Path) -> None:
-    """Concatenate rule files in order (bytes) so hashcat sees one flat rule set."""
-    with out_path.open("wb") as merged:
-        for rf in rule_files:
-            data = strip_utf8_bom(rf.read_bytes())
-            if not data:
-                continue
-            merged.write(data)
-            if not data.endswith(b"\n"):
-                merged.write(b"\n")
+    For every permutation of every non-empty subset (length 1 … n):
+      - Each word segment can independently be lowercase, Title-case, or UPPERCASE.
+      - All combos of a k-word permutation are produced and joined. 
+    """
+    seen: dict[str, None] = {}
+    result: list[str] = []
+    for length in range(1, len(words) + 1):
+        for perm in permutations(words, length):
+            variants: list[list[str]] = []
+            for w in perm:
+                caps: list[str] = [w]
+                c = _cap(w)
+                if c != w:
+                    caps.append(c)
+                u = w.upper()
+                if u != w and u not in caps:
+                    caps.append(u)
+                variants.append(caps)
+            for combo in product(*variants):
+                combined = "".join(combo)
+                if combined not in seen:
+                    seen[combined] = None
+                    result.append(combined)
+    return result
 
 
 def main() -> int:
     root = script_root()
     words_path = root / "dicts" / "0.txt"
-    rules_dir = root / "rules"
     out_path = root / "dicts" / "customgenerated.txt"
 
     if not words_path.is_file():
         print(f"Missing wordlist: {words_path}", file=sys.stderr)
-        return 1
-    if not rules_dir.is_dir():
-        print(f"Missing rules directory: {rules_dir}", file=sys.stderr)
-        return 1
-
-    rule_files = discover_rule_files(rules_dir)
-    if not rule_files:
-        print(f"No .rule files found in {rules_dir}", file=sys.stderr)
         return 1
 
     words = load_base_words(words_path)
@@ -87,58 +152,40 @@ def main() -> int:
         print(f"No words found in {words_path}", file=sys.stderr)
         return 1
 
-    hashcat = resolve_hashcat()
-    if hashcat is None:
-        print(
-            "hashcat not found. Set HASHCAT_PATH to hashcat.exe or add hashcat to PATH.",
-            file=sys.stderr,
-        )
-        return 1
+    print(f"Loaded {len(words)} base word(s):")
+    for w in words:
+        print(f"  {w}")
+    print()
+
+    words = expand_combinations(words)
+    print(f"Expanded to {len(words)} combination(s) to process:")
+    for w in words:
+        print(f"  {w}")
+    print()
+
+    print("Starting in 3 seconds...")
+    for remaining in range(3, 0, -1):
+        print(f"  {remaining}...", flush=True)
+        time.sleep(1)
+    print()
+
+    seen: dict[str, None] = {}
+    generated: list[str] = []
+
+    for symbol, description, transform in RULES:
+        print(f"Applying rule [{symbol}] {description}...")
+        for w in words:
+            result = transform(w)  # type: ignore[operator]
+            results = result if isinstance(result, list) else [result]
+            for r in results:
+                if r not in seen:
+                    seen[r] = None
+                    generated.append(r)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(generated) + "\n", encoding="utf-8")
 
-    tmp_words: Path | None = None
-    tmp_rules: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=".txt",
-            delete=False,
-            encoding="utf-8",
-            newline="\n",
-        ) as tmp:
-            tmp.writelines(w + "\n" for w in words)
-            tmp_words = Path(tmp.name)
-
-        fd, merged_name = tempfile.mkstemp(suffix=".rule", prefix="merged-rules-")
-        os.close(fd)
-        tmp_rules = Path(merged_name)
-        write_merged_rules(rule_files, tmp_rules)
-
-        cmd: list[str] = [
-            str(hashcat),
-            "--force",
-            "--stdout",
-            str(tmp_words.resolve()),
-            "-r",
-            str(tmp_rules.resolve()),
-        ]
-        with out_path.open("wb") as out_f:
-            cp = subprocess.run(
-                cmd,
-                cwd=str(hashcat.parent),
-                stdout=out_f,
-                stderr=subprocess.PIPE,
-            )
-        if cp.returncode != 0:
-            sys.stderr.write(cp.stderr.decode(errors="replace"))
-            return cp.returncode
-    finally:
-        if tmp_words is not None:
-            tmp_words.unlink(missing_ok=True)
-        if tmp_rules is not None:
-            tmp_rules.unlink(missing_ok=True)
-
+    print(f"\nWritten {len(generated)} word(s) to {out_path.relative_to(root)}")
     return 0
 
 
