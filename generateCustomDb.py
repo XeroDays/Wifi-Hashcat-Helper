@@ -106,13 +106,12 @@ def rule(symbol: str, description: str) -> tuple[str, str, object]:
 # Add new rules here — only the symbol string and a description are needed.
 # ---------------------------------------------------------------------------
 RULES = [
-    rule("{$}",          "Word as-is"),
-    rule("{$}{1~99999}", "Word + {number} 1 to 10000"),
+    rule("{$}",           "Word as-is"),
+    rule("{$}{1~99999}",  "Word + {number} 1 to 10000"),
     rule("{$}@{1~99999}", "Word + {number} 1 to 10000"), 
     rule("{$}!{1~99999}", "Word + {number} 1 to 10000"), 
     rule("{$}${1~99999}", "Word + {number} 1 to 10000"), 
     rule("{$}#{1~99999}", "Word + {number} 1 to 10000"),   
-    
 ]
 
 
