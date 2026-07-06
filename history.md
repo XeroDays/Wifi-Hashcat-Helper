@@ -12,5 +12,7 @@
 | crystal.hc22000         | ❌️    | ✅         | -        | -             | -       | -                  | Crystal411  |
 | saadwifi.hc22000        | ✅     | -         | -        | -             | -       | -                  | Saad1221    |
 | wirelessnet.hc22000     | -     | -         | -        | -             | -       | -                  |             |
+| TP-Link_CAD2.hc22000    | -     | ✅         | -        | -             | -       | -                  | 85618879    |
+| Ghonim.hc22000          | -     | -         | -        | -             | -       | -                  |             |
 
 

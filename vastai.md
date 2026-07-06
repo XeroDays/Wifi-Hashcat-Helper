@@ -31,6 +31,12 @@ sudo apt install -y p7zip-full
 cd Wifi-Hashcat-Helper/dicts
 ```
 
+## Test Hashcat (GPU dry run)
+
+```bash
+hashcat -b -m 22000
+```
+
 ## Download Dictionary File
 
 ```bash
