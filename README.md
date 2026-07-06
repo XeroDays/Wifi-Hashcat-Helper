@@ -24,6 +24,7 @@ Approximate `-m 22000` speeds by GPU. Avg Speed values are GPT-based; Actual (Te
 | RTX 3070 Ti 8 GB            | ~725 kH/s       | -               | -          | -      |
 | 2x RTX 2060 34 MCU          | ~750 kH/s       | 680 kH/s        | 52m        | 0.089$ |
 | RTX 4060 Ti 16 GB           | ~650 kH/s       | 610 kH/s        | 59m        | 0.089$ |
+| 1x RTX 4060 8 GB            | ~500 kH/s       | 407 kH/s        | -          | 0.079$ |
 | 2x RTX 4060 Ti 16 GB        | ~1 300 kH/s     | -               | -          | -      |
 | RTX 2060 Super 8 GB         | ~475 kH/s       | -               | -          | -      |
 | RTX 3060 12 GB 28 MCU       | ~405 kH/s       | 321 kH/s        | 1h 52m     | 0.049$ |
