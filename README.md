@@ -9,25 +9,25 @@ Approximate `-m 22000` speeds by GPU. Avg Speed values are GPT-based; Actual (Te
 
 | GPU                         | Avg Speed (GPT) | Actual (Tested) | Weakpass_4 | USD/h  |
 | --------------------------- | --------------- | --------------- | ---------- | ------ |
+| RTX 3060 12 GB 28 MCU       | ~405 kH/s       | 321 kH/s        | 1h 52m     | 0.049$ |
+| 1x RTX 4060 8 GB            | ~500 kH/s       | 407 kH/s        | -          | 0.079$ |
+| 1x RTX 5060 Ti 16 GB        | ~925 kH/s       | 612 kH/s        | 51m        | 0.089$ |
+| 2x RTX 2060 34 MCU          | ~750 kH/s       | 680 kH/s        | 52m        | 0.089$ |
+| RTX 4060 Ti 16 GB           | ~650 kH/s       | 610 kH/s        | 59m        | 0.089$ |
+| 2x RTX 5060 Ti 16 GB 36 MCU | ~1 850 kH/s     | 1180 kH/s       | 29m        | 0.127$ |
 | L40S 45 GB                  | ~3 100 kH/s     | -               | -          | -      |
 | Q RTX 8000 45 GB            | ~2 050 kH/s     | -               | -          | -      |
 | A40 45 GB                   | ~1 800 kH/s     | -               | -          | -      |
 | RTX 5080 16 GB              | ~1 525 kH/s     | -               | -          | -      |
 | RTX 5070 Ti 16 GB           | ~1 300 kH/s     | -               | -          | -      |
 | RTX 4500 Ada 24 GB          | ~1 300 kH/s     | -               | -          | -      |
+| 2x RTX 4060 Ti 16 GB        | ~1 300 kH/s     | -               | -          | -      |
 | RTX 5070 12 GB              | ~1 150 kH/s     | -               | -          | -      |
 | RTX 4070 Super 12 GB        | ~1 025 kH/s     | -               | -          | -      |
-| 1x RTX 5060 Ti 16 GB        | ~925 kH/s       | 612 kH/s        | 51m        | 0.089$ |
-| 2x RTX 5060 Ti 16 GB 36 MCU | ~1 850 kH/s     | 1180 kH/s       | 29m        | 0.127$ |
 | RTX 4070 12 GB              | ~825 kH/s       | -               | -          | -      |
 | 2x RTX 3060 28 MCU          | ~810 kH/s       | 710 kH/s        | -          | -      |
 | RTX 3070 Ti 8 GB            | ~725 kH/s       | -               | -          | -      |
-| 2x RTX 2060 34 MCU          | ~750 kH/s       | 680 kH/s        | 52m        | 0.089$ |
-| RTX 4060 Ti 16 GB           | ~650 kH/s       | 610 kH/s        | 59m        | 0.089$ |
-| 1x RTX 4060 8 GB            | ~500 kH/s       | 407 kH/s        | -          | 0.079$ |
-| 2x RTX 4060 Ti 16 GB        | ~1 300 kH/s     | -               | -          | -      |
 | RTX 2060 Super 8 GB         | ~475 kH/s       | -               | -          | -      |
-| RTX 3060 12 GB 28 MCU       | ~405 kH/s       | 321 kH/s        | 1h 52m     | 0.049$ |
 | RTX A4000 16 GB             | ~350 kH/s       | -               | -          | -      |
 | GTX 1660 6 GB               | ~300 kH/s       | -               | -          | -      |
 
